@@ -1,7 +1,5 @@
 # mvc-scaffold 增强 MVC 架构脚手架
 
-[![CI](https://github.com/qiyangfan/mvc-scaffold/actions/workflows/ci.yml/badge.svg)](https://github.com/qiyangfan/mvc-scaffold/actions/workflows/ci.yml)
-
 简单 CRUD、流程固定的业务系统首选骨架：**Controller → Service → Manager → Mapper** 四层，编码约束对齐《Java 开发手册（黄山版）》。与 [ddd-scaffold](../ddd-scaffold) 二选一，选型边界见文末。
 
 ## 技术栈（2026-09 裁决版本）
