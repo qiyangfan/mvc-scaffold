@@ -1,0 +1,19 @@
+# 生产/联调配置：--spring.profiles.active=mysql 启用
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/mvc_scaffold?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: change-me
+  sql:
+    init:
+      # 表结构由 doc/sql/init.sql 人工/发布系统执行，启动时不初始化
+      mode: never
+  h2:
+    console:
+      enabled: false
+
+dept:
+  provider: remote
+  remote:
+    base-url: http://dept-service:8080

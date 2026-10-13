@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.app.mapper.EmployeeMapper">
+
+    <!-- 禁止 SELECT *，列清单集中维护 -->
+    <sql id="allColumns">
+        id, emp_no, name, dept_id, salary, status, hire_date, gmt_create, gmt_modified, deleted
+    </sql>
+
+    <resultMap id="employeeResultMap" type="com.example.app.model.dataobject.EmployeeDO">
+        <id column="id" property="id"/>
+        <result column="emp_no" property="empNo"/>
+        <result column="name" property="name"/>
+        <result column="dept_id" property="deptId"/>
+        <result column="salary" property="salary"/>
+        <result column="status" property="status"/>
+        <result column="hire_date" property="hireDate"/>
+        <result column="gmt_create" property="gmtCreate"/>
+        <result column="gmt_modified" property="gmtModified"/>
+        <result column="deleted" property="deleted"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO t_employee (name, dept_id, salary, status, hire_date)
+        VALUES (#{name}, #{deptId}, #{salary}, #{status}, #{hireDate})
+    </insert>
+
+    <update id="updateEmpNo">
+        UPDATE t_employee
+        SET emp_no = #{empNo},
+            gmt_modified = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+          AND deleted = 0
+    </update>
+
+    <select id="get" resultMap="employeeResultMap">
+        SELECT
+        <include refid="allColumns"/>
+        FROM t_employee
+        WHERE id = #{id}
+          AND deleted = 0
+    </select>
+
+    <select id="listByQuery" resultMap="employeeResultMap"
+            parameterType="com.example.app.model.dto.EmployeePageQueryDTO">
+        SELECT
+        <include refid="allColumns"/>
+        FROM t_employee
+        <where>
+            deleted = 0
+            <if test="name != null and name != ''">
+                AND name LIKE CONCAT('%', #{name}, '%')
+            </if>
+            <if test="deptId != null">
+                AND dept_id = #{deptId}
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+        </where>
+        ORDER BY id DESC
+    </select>
+
+    <update id="update" parameterType="com.example.app.model.dataobject.EmployeeDO">
+        UPDATE t_employee
+        <set>
+            <if test="name != null">
+                name = #{name},
+            </if>
+            <if test="salary != null">
+                salary = #{salary},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="hireDate != null">
+                hire_date = #{hireDate},
+            </if>
+            gmt_modified = CURRENT_TIMESTAMP
+        </set>
+        WHERE id = #{id}
+          AND deleted = 0
+    </update>
+
+    <!-- 逻辑删除：业务数据不物理删除，便于审计与找回 -->
+    <update id="remove">
+        UPDATE t_employee
+        SET deleted = 1,
+            gmt_modified = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+          AND deleted = 0
+    </update>
+</mapper>

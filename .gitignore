@@ -1,0 +1,25 @@
+# 编译产物
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.factorypath
+.settings/
+
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log
+logs/
+
+# 本地环境配置（含密码，禁止入库）
+application-local.yml

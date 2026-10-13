@@ -1,0 +1,53 @@
+# 默认配置：内置 H2（MySQL 兼容模式），开箱即跑，无需任何外部依赖
+spring:
+  application:
+    name: mvc-scaffold
+  datasource:
+    url: jdbc:h2:mem:mvc_scaffold;MODE=MySQL;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  sql:
+    init:
+      # 内嵌库启动时自动执行 classpath:schema.sql
+      mode: embedded
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+
+pagehelper:
+  # 显式指定方言为 mysql：H2 以 MySQL 模式运行时方言探测结果不稳定
+  helper-dialect: mysql
+  reasonable: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+# 防腐层演示配置：local=配置文件模拟部门数据（默认），remote=HTTP 调用部门服务
+dept:
+  provider: local
+  local:
+    depts:
+      - id: 1
+        name: 平台研发部
+        enabled: true
+      - id: 2
+        name: 算法部
+        enabled: true
+      - id: 3
+        name: 已撤销部门
+        enabled: false
+
+logging:
+  level:
+    com.example.app.mapper: debug
+
+server:
+  port: 8080
