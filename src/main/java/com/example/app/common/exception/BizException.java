@@ -19,4 +19,14 @@ public class BizException extends RuntimeException {
         super(message);
         this.errorCode = errorCode;
     }
+
+    public BizException(ErrorCode errorCode, Throwable cause) {
+        super(errorCode.getMessage(), cause);
+        this.errorCode = errorCode;
+    }
+
+    public BizException(ErrorCode errorCode, String message, Throwable cause) {
+        super(message, cause);
+        this.errorCode = errorCode;
+    }
 }

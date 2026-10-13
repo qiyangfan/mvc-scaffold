@@ -87,6 +87,55 @@ class EmployeeServiceImplTest {
         verify(employeeMapper, never()).update(any());
     }
 
+    @Test
+    void updateShouldRejectInvalidStatus() {
+        EmployeeDO active = new EmployeeDO();
+        active.setId(1L);
+        active.setStatus(EmployeeStatus.REGULAR.getCode());
+        when(employeeMapper.get(1L)).thenReturn(active);
+
+        EmployeeUpdateDTO updateDTO = new EmployeeUpdateDTO();
+        updateDTO.setId(1L);
+        updateDTO.setStatus(999);
+
+        assertThatThrownBy(() -> employeeService.updateEmployee(updateDTO))
+                .isInstanceOf(BizException.class)
+                .extracting(e -> ((BizException) e).getErrorCode())
+                .isEqualTo(ErrorCode.PARAM_INVALID);
+    }
+
+    @Test
+    void updateShouldRejectEmptyFields() {
+        EmployeeDO active = new EmployeeDO();
+        active.setId(1L);
+        active.setStatus(EmployeeStatus.REGULAR.getCode());
+        when(employeeMapper.get(1L)).thenReturn(active);
+
+        EmployeeUpdateDTO updateDTO = new EmployeeUpdateDTO();
+        updateDTO.setId(1L);
+
+        assertThatThrownBy(() -> employeeService.updateEmployee(updateDTO))
+                .isInstanceOf(BizException.class)
+                .extracting(e -> ((BizException) e).getErrorCode())
+                .isEqualTo(ErrorCode.PARAM_INVALID);
+    }
+
+    @Test
+    void updateShouldSucceed() {
+        EmployeeDO active = new EmployeeDO();
+        active.setId(1L);
+        active.setStatus(EmployeeStatus.REGULAR.getCode());
+        when(employeeMapper.get(1L)).thenReturn(active);
+
+        EmployeeUpdateDTO updateDTO = new EmployeeUpdateDTO();
+        updateDTO.setId(1L);
+        updateDTO.setName("Updated Name");
+        updateDTO.setStatus(EmployeeStatus.TRIAL.getCode());
+
+        employeeService.updateEmployee(updateDTO);
+        verify(employeeMapper).update(any(EmployeeDO.class));
+    }
+
     private EmployeeCreateDTO createDTO(Long deptId) {
         EmployeeCreateDTO createDTO = new EmployeeCreateDTO();
         createDTO.setName("Zhang San");

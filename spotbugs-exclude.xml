@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- 忽略测试代码的检查 -->
+    <Match>
+        <Class name="~.*\.*Test.*"/>
+    </Match>
+    <Match>
+        <Package name="~com\.example\.app\.architecture.*"/>
+    </Match>
+
+    <!-- 忽略对象引用暴露警告（DTO、VO、DO、Record 等字段传参/返回在业务对象中属于常态） -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- 构造函数校验抛异常防构造攻击（现代 Java 已废弃 finalizer，业务校验必须在构造器执行） -->
+    <Match>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
+</FindBugsFilter>

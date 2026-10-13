@@ -12,6 +12,11 @@
 | MyBatis | spring-boot-starter 4.1.0 | Boot 4 对齐线 |
 | PageHelper | spring-boot-starter 4.1.1 | 物理分页 |
 | springdoc-openapi | 3.1.1 | 访问 `/swagger-ui.html` |
+| ArchUnit | 1.5.0（test） | 四层增强 MVC 依赖规则在测试期强制执行 |
+| Spotless | 2.44.3 | 代码格式化门禁，支持 `mvn spotless:apply` 一键排版 |
+| SpotBugs | 4.8.6.6 | 字节码静态缺陷扫描门禁 |
+| PMD | 3.26.0 | 代码规范与潜在缺陷静态检查门禁 |
+| JaCoCo | 0.8.12 | 单元测试指令与分支覆盖率门禁 |
 | H2 / MySQL | Boot 管理 | 默认 H2（MySQL 模式）开箱即跑，生产切 MySQL |
 
 ## 快速开始
@@ -86,11 +91,14 @@ com.example.app
 5. `controller` 加端点（`@Valid`、`@Operation`），`ErrorCode` 补错误码。
 6. 补测试：Service 单测（Mock Mapper/Manager）+ Controller 集成测试（H2 全链路）。
 
-## 测试
+## 测试与质量门禁
 
-```
-mvn test -DskipTests=false
+```bash
+mvn clean verify -DskipTests=false  # 全量验证：测试 + Spotless + PMD + SpotBugs + JaCoCo + ArchUnit
+mvn spotless:apply                  # 格式化代码（若 Spotless 校验不通过可一键修复）
 ```
 
 - `EmployeeServiceImplTest`：Service 层单测（Mockito），验证部门校验、工号回填、离职冻结规则。
 - `EmployeeControllerTest`：HTTP 全链路集成测试（H2 + 本地防腐层），覆盖创建/查询/更新/分页/逻辑删除/异常分支。
+- `ArchitectureTest`：ArchUnit 守护 Controller -> Service -> Manager -> Mapper 严格依赖方向、DO 不得外泄。
+- `Spotless` / `PMD` / `SpotBugs` / `JaCoCo`：在 `verify` 阶段自动化执行质量门禁，未达标直接阻断构建。

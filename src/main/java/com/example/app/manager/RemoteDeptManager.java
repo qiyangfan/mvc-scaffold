@@ -47,7 +47,7 @@ public class RemoteDeptManager implements DeptManager {
                     .body(ExternalDeptResponse.class);
         } catch (RestClientException e) {
             log.error("call dept service failed, deptId:{}", deptId, e);
-            throw new BizException(ErrorCode.THIRD_PARTY_ERROR);
+            throw new BizException(ErrorCode.THIRD_PARTY_ERROR, e);
         }
         if (response == null || response.data() == null) {
             throw new BizException(ErrorCode.DEPT_NOT_FOUND);
