@@ -56,10 +56,10 @@ npx --yes markdownlint-cli2@0.23.3 --config .markdownlint.json "**/*.md"
 
 | 门禁 | 拦什么 |
 | --- | --- |
-| Spotless 3.10.4 | 格式 |
+| Spotless 3.11.0 | 格式 |
 | PMD 3.28.0（内置 PMD 7.17.0） | 静态缺陷 |
 | SpotBugs 4.10.5.0 | 字节码缺陷 |
-| JaCoCo 0.8.15 | Instruction ≥ 70%、Branch ≥ 50% |
+| JaCoCo 0.8.16 | Instruction ≥ 70%、Branch ≥ 50% |
 | ArchUnit 1.5.1 | 分层方向、DO 不外泄、无环 |
 | markdownlint 0.23.3 | 文档结构与行宽 |
 | 契约漂移 | `git status --porcelain contracts/` 必须为空 |

@@ -77,10 +77,10 @@ npx --yes markdownlint-cli2@0.23.3 --config .markdownlint.json "**/*.md"
 
 | 工具 | 门禁类型 | 阈值 / 规则 | 修复命令 / 处理方案 |
 | :--- | :--- | :--- | :--- |
-| **Spotless (3.10.4)** | 格式化规范 | 严格 4 空格缩进、去除无用 import、尾部换行 | `mvn spotless:apply` 一键自动格式化 |
+| **Spotless (3.11.0)** | 格式化规范 | 严格 4 空格缩进、去除无用 import、尾部换行 | `mvn spotless:apply` 一键自动格式化 |
 | **PMD (3.28.0 / PMD 7.17.0)** | 静态代码分析 | 0 Violation（优先排查并发、潜在空指针、异常丢失） | 查看 `target/pmd.xml` 针对性修复代码 |
 | **SpotBugs (4.10.5.0)** | 字节码缺陷扫描 | 0 Bug（Effort=Max, Threshold=Medium） | 查看 `target/spotbugs.xml` 修复潜在缺陷 |
-| **JaCoCo (0.8.15)** | 单元测试覆盖率 | Instruction ≥ 70%, Branch ≥ 50% | 为未覆盖分支补充针对性单测用例 |
+| **JaCoCo (0.8.16)** | 单元测试覆盖率 | Instruction ≥ 70%, Branch ≥ 50% | 为未覆盖分支补充针对性单测用例 |
 | **ArchUnit (1.5.1)** | 架构守护测试 | 100% 规则通过（四层依赖方向、DO 不得外泄） | 检查类所属包及引用方向 |
 | **markdownlint (0.23.3)** | 文档结构与行宽 | 标题/列表/表格空行、表格分隔行风格、围栏须标语言、正文行宽 ≤ 80 | `npx --yes markdownlint-cli2@0.23.3 --config .markdownlint.json "**/*.md"` 定位后手工修 |
 | **契约漂移** | 接口契约一致性 | `git status --porcelain contracts/` 必须为空 | `mvn clean verify -DskipTests=false -Dcontract.export=true` 后提交 `contracts/openapi.json` |
