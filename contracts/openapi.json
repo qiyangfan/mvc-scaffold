@@ -1,0 +1,540 @@
+{
+  "openapi" : "3.1.0",
+  "info" : {
+    "title" : "mvc-scaffold API",
+    "description" : "增强 MVC 架构脚手架（Controller-Service-Manager-Mapper）示例接口",
+    "version" : "1.0.0"
+  },
+  "servers" : [ {
+    "url" : "http://localhost",
+    "description" : "Generated server url"
+  } ],
+  "paths" : {
+    "/api/v1/employees" : {
+      "get" : {
+        "tags" : [ "员工管理" ],
+        "summary" : "分页查询员工",
+        "operationId" : "list",
+        "parameters" : [ {
+          "name" : "name",
+          "in" : "query",
+          "description" : "姓名，模糊匹配",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "description" : "姓名，模糊匹配",
+            "example" : "Zhang"
+          },
+          "example" : "Zhang"
+        }, {
+          "name" : "deptId",
+          "in" : "query",
+          "description" : "部门 ID，精确匹配",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "部门 ID，精确匹配",
+            "example" : 1
+          },
+          "example" : 1
+        }, {
+          "name" : "status",
+          "in" : "query",
+          "description" : "状态编码，不传则不过滤",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "description" : "状态编码，不传则不过滤",
+            "enum" : [ "TRIAL", "REGULAR", "RESIGNED", "TRIAL", "REGULAR", "RESIGNED" ],
+            "example" : "REGULAR"
+          },
+          "example" : "REGULAR"
+        }, {
+          "name" : "pageNum",
+          "in" : "query",
+          "description" : "页码，从 1 开始",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "页码，从 1 开始",
+            "example" : 1,
+            "minimum" : 1
+          },
+          "example" : 1
+        }, {
+          "name" : "pageSize",
+          "in" : "query",
+          "description" : "每页条数，上限 200",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "description" : "每页条数，上限 200",
+            "example" : 10,
+            "maximum" : 200,
+            "minimum" : 1
+          },
+          "example" : 10
+        } ],
+        "responses" : {
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RVoid"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RPageResultEmployeeVO"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RVoid"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "员工管理" ],
+        "summary" : "更新员工",
+        "operationId" : "update",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EmployeeUpdateDTO"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RVoid"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RVoid"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RVoid"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ "员工管理" ],
+        "summary" : "创建员工",
+        "operationId" : "create",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EmployeeCreateDTO"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RVoid"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RString"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/employees/{id}" : {
+      "get" : {
+        "tags" : [ "员工管理" ],
+        "summary" : "员工详情",
+        "operationId" : "get",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RVoid"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/REmployeeVO"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RVoid"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ "员工管理" ],
+        "summary" : "删除员工（逻辑删除）",
+        "operationId" : "remove",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "400" : {
+            "description" : "Bad Request",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RVoid"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RVoid"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "Internal Server Error",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RVoid"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "RVoid" : {
+        "type" : "object",
+        "description" : "统一响应体",
+        "properties" : {
+          "code" : {
+            "type" : "string",
+            "description" : "响应码，0 表示成功",
+            "example" : "0"
+          },
+          "message" : {
+            "type" : "string",
+            "description" : "响应信息（英文）",
+            "example" : "success"
+          },
+          "data" : {
+            "description" : "业务数据"
+          }
+        }
+      },
+      "EmployeeUpdateDTO" : {
+        "type" : "object",
+        "description" : "更新员工入参",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "description" : "员工 ID：UUID v7 字符串",
+            "example" : "019b1f2c-7a3e-7c4b-8f1d-2e6a9b0c1d2e"
+          },
+          "name" : {
+            "type" : "string",
+            "description" : "姓名",
+            "example" : "Zhang San",
+            "maxLength" : 64,
+            "minLength" : 0
+          },
+          "salary" : {
+            "type" : "number",
+            "description" : "月薪",
+            "example" : 25000.0,
+            "minimum" : 0.0
+          },
+          "status" : {
+            "type" : "string",
+            "description" : "状态编码，取值见 EmployeeStatus",
+            "enum" : [ "TRIAL", "REGULAR", "RESIGNED" ],
+            "example" : "REGULAR"
+          },
+          "hireDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "入职日期",
+            "example" : "2026-09-01"
+          }
+        },
+        "required" : [ "id" ]
+      },
+      "EmployeeCreateDTO" : {
+        "type" : "object",
+        "description" : "创建员工入参",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "description" : "姓名",
+            "example" : "Zhang San",
+            "maxLength" : 64,
+            "minLength" : 0
+          },
+          "deptId" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "部门 ID",
+            "example" : 1
+          },
+          "salary" : {
+            "type" : "number",
+            "description" : "月薪",
+            "example" : 20000.0,
+            "minimum" : 0.0
+          },
+          "status" : {
+            "type" : "string",
+            "description" : "状态编码，取值见 EmployeeStatus",
+            "enum" : [ "TRIAL", "REGULAR", "RESIGNED" ],
+            "example" : "TRIAL"
+          },
+          "hireDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "入职日期",
+            "example" : "2026-09-01"
+          }
+        },
+        "required" : [ "deptId", "hireDate", "name", "salary", "status" ]
+      },
+      "RString" : {
+        "type" : "object",
+        "description" : "统一响应体",
+        "properties" : {
+          "code" : {
+            "type" : "string",
+            "description" : "响应码，0 表示成功",
+            "example" : "0"
+          },
+          "message" : {
+            "type" : "string",
+            "description" : "响应信息（英文）",
+            "example" : "success"
+          },
+          "data" : {
+            "type" : "string",
+            "description" : "业务数据"
+          }
+        }
+      },
+      "EmployeeVO" : {
+        "type" : "object",
+        "description" : "员工详情",
+        "properties" : {
+          "id" : {
+            "type" : "string",
+            "description" : "员工 ID：UUID v7 字符串",
+            "example" : "019b1f2c-7a3e-7c4b-8f1d-2e6a9b0c1d2e"
+          },
+          "empNo" : {
+            "type" : "string",
+            "description" : "工号",
+            "example" : "EMP000001"
+          },
+          "name" : {
+            "type" : "string",
+            "description" : "姓名",
+            "example" : "Zhang San"
+          },
+          "deptId" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "部门 ID",
+            "example" : 1
+          },
+          "deptName" : {
+            "type" : "string",
+            "description" : "部门名称（来自部门服务防腐层）",
+            "example" : "平台研发部"
+          },
+          "salary" : {
+            "type" : "number",
+            "description" : "月薪",
+            "example" : 20000.0
+          },
+          "status" : {
+            "type" : "string",
+            "description" : "状态码",
+            "example" : "1"
+          },
+          "statusDesc" : {
+            "type" : "string",
+            "description" : "状态描述",
+            "example" : "正式"
+          },
+          "hireDate" : {
+            "type" : "string",
+            "format" : "date",
+            "description" : "入职日期",
+            "example" : "2026-09-01"
+          },
+          "gmtCreate" : {
+            "type" : "string",
+            "format" : "date-time",
+            "description" : "创建时间",
+            "example" : "2026-09-21 10:00:00"
+          }
+        }
+      },
+      "PageResultEmployeeVO" : {
+        "type" : "object",
+        "description" : "统一分页响应体",
+        "properties" : {
+          "total" : {
+            "type" : "integer",
+            "format" : "int64",
+            "description" : "总条数",
+            "example" : 100
+          },
+          "list" : {
+            "type" : "array",
+            "description" : "当前页数据",
+            "items" : {
+              "$ref" : "#/components/schemas/EmployeeVO"
+            }
+          }
+        }
+      },
+      "RPageResultEmployeeVO" : {
+        "type" : "object",
+        "description" : "统一响应体",
+        "properties" : {
+          "code" : {
+            "type" : "string",
+            "description" : "响应码，0 表示成功",
+            "example" : "0"
+          },
+          "message" : {
+            "type" : "string",
+            "description" : "响应信息（英文）",
+            "example" : "success"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/PageResultEmployeeVO",
+            "description" : "业务数据"
+          }
+        }
+      },
+      "REmployeeVO" : {
+        "type" : "object",
+        "description" : "统一响应体",
+        "properties" : {
+          "code" : {
+            "type" : "string",
+            "description" : "响应码，0 表示成功",
+            "example" : "0"
+          },
+          "message" : {
+            "type" : "string",
+            "description" : "响应信息（英文）",
+            "example" : "success"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/EmployeeVO",
+            "description" : "业务数据"
+          }
+        }
+      }
+    }
+  }
+}

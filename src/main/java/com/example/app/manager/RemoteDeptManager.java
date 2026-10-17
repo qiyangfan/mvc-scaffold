@@ -2,15 +2,13 @@ package com.example.app.manager;
 
 import com.example.app.common.exception.BizException;
 import com.example.app.common.exception.ErrorCode;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -18,24 +16,16 @@ import java.util.List;
 /**
  * 远程部门 Manager：通过 HTTP 调用部门服务（dept.provider=remote 时生效）。
  * <p>防腐要点：外部响应模型（{@link ExternalDeptResponse}）不出本类；HTTP 异常统一翻译为 THIRD_PARTY_ERROR。</p>
+ * <p>{@link RestClient} 由 {@link DeptRemoteConfig} 装配后注入——本类不关心超时与 baseUrl
+ * 从哪来，也因此可以在单测里换掉客户端（见 {@code RemoteDeptManagerTest}）。</p>
  */
 @Slf4j
 @Component
 @ConditionalOnProperty(prefix = "dept", name = "provider", havingValue = "remote")
+@RequiredArgsConstructor
 public class RemoteDeptManager implements DeptManager {
 
     private final RestClient restClient;
-
-    public RemoteDeptManager(@Value("${dept.remote.base-url}") String baseUrl) {
-        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
-        // 超时必须显式设置：多实例部署下，无超时的外部调用会拖垮线程池
-        requestFactory.setConnectTimeout(Duration.ofSeconds(2));
-        requestFactory.setReadTimeout(Duration.ofSeconds(3));
-        this.restClient = RestClient.builder()
-                .baseUrl(baseUrl)
-                .requestFactory(requestFactory)
-                .build();
-    }
 
     @Override
     public DeptInfo getDeptInfo(Long deptId) {

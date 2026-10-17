@@ -34,8 +34,14 @@ public class R<T> {
         return r;
     }
 
+    /**
+     * 无数据成功响应。
+     * <p>显式写 {@code (Void) null} 而非裸 {@code ok(null)}：一是把重载目标钉死
+     * （避免将来新增同参数量重载时引入歧义），二是让读代码的人不必停下来确认
+     * "这是重载派发还是自调用"。</p>
+     */
     public static R<Void> ok() {
-        return ok(null);
+        return ok((Void) null);
     }
 
     public static <T> R<T> fail(String code, String message) {

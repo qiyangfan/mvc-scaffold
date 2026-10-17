@@ -1,6 +1,7 @@
 package com.example.app.model.dto;
 
 import com.example.app.common.api.PageQuery;
+import com.example.app.common.enums.EmployeeStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -19,6 +20,7 @@ public class EmployeePageQueryDTO extends PageQuery {
     @Schema(description = "部门 ID，精确匹配", example = "1")
     private Long deptId;
 
-    @Schema(description = "状态：0 试用 1 正式 2 离职", example = "1")
-    private Integer status;
+    @Schema(description = "状态编码，不传则不过滤", example = "REGULAR",
+            allowableValues = {"TRIAL", "REGULAR", "RESIGNED"})
+    private EmployeeStatus status;
 }

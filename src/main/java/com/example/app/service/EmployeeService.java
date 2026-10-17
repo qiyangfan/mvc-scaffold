@@ -12,16 +12,16 @@ import com.example.app.model.vo.EmployeeVO;
 public interface EmployeeService {
 
     /** 创建员工，返回新员工 ID */
-    Long createEmployee(EmployeeCreateDTO createDTO);
+    String createEmployee(EmployeeCreateDTO createDTO);
 
     /** 更新员工（选择性更新，离职员工禁止修改） */
     void updateEmployee(EmployeeUpdateDTO updateDTO);
 
     /** 删除员工（逻辑删除） */
-    void removeEmployee(Long id);
+    void removeEmployee(String id);
 
     /** 查询员工详情 */
-    EmployeeVO getEmployee(Long id);
+    EmployeeVO getEmployee(String id);
 
     /** 分页查询员工 */
     PageResult<EmployeeVO> listEmployees(EmployeePageQueryDTO pageQueryDTO);

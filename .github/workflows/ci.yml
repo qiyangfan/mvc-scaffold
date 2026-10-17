@@ -13,23 +13,57 @@ permissions:
 
 jobs:
   verify:
-    name: verify (JDK 21)
+    name: verify (JDK 25)
     runs-on: ubuntu-latest
     steps:
+      # SHA 固定：actions/checkout@v5 的 tag 是轻量 tag，指向 commit
+      # fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09（= releases/v5 分支头）。
+      # 浮动 tag 可被 action 所有者静默改指向（供应链攻击面），故按 zizmor 建议 pin 到 commit；
+      # 升级时用 dependabot / renovate 跟着 v5 tag 走，不要手写回浮动 tag。
+      # persist-credentials=false：本流水线只用 git status/diff 做本地比对，不需要推送凭证，
+      # 不留凭证可避免后续任何上传 workspace 的步骤把 GITHUB_TOKEN 带进产物。
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
 
+      # 前端/契约工具链对齐版本：openapi-typescript 等由前端侧执行
       - name: Set up Node.js 24
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444  # v5
         with:
           node-version: '24'
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v5
+      # 文档门禁：markdownlint 结构与行宽纪律（规则见 .markdownlint.json）。
+      # 版本号显式钉住，保证门禁判定可复现。
+      # glob 必须加引号：否则 bash 把 ** 当单层 *，
+      # 会漏掉 README.md 与 doc/adr/*.md。
+      - name: Lint Markdown
+        run: >-
+          npx --yes markdownlint-cli2@0.23.3
+          --config .markdownlint.json "**/*.md"
+
+      # 单一基线：JDK 25 LTS。
+      # 门禁工具链（JaCoCo 0.8.15 / ArchUnit 1.5.1 / SpotBugs 4.10.5 / PMD 3.28）
+      # 均已支持 Java 25 class file，低于这些版本的覆盖率统计会失真
+      - name: Set up JDK 25
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961  # v5
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '25'
           cache: maven
 
+      # contract.export=true：把最新 OpenAPI schema 落库，供下一步做漂移比对
       - name: Verify with Maven (Tests & Quality Gates)
-        run: mvn clean verify -DskipTests=false
+        run: mvn clean verify -DskipTests=false -Dcontract.export=true
+
+      # 契约漂移门禁：改了接口代码却没同步 contracts/openapi.json，流水线直接红
+      - name: Check API contract drift
+        run: |
+          if [ -n "$(git status --porcelain contracts/)" ]; then
+            echo "::error::API contract drift detected."
+            echo "Run: mvn clean verify -DskipTests=false \\"
+            echo "     -Dcontract.export=true"
+            echo "then commit contracts/openapi.json"
+            git --no-pager diff -- contracts/
+            exit 1
+          fi

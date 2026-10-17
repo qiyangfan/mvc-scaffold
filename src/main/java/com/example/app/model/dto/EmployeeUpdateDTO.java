@@ -4,8 +4,6 @@ import com.example.app.common.enums.EmployeeStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
@@ -21,10 +19,9 @@ import java.time.LocalDate;
 @Schema(description = "更新员工入参")
 public class EmployeeUpdateDTO {
 
-    @Schema(description = "员工 ID", example = "1")
+    @Schema(description = "员工 ID：UUID v7 字符串", example = "019b1f2c-7a3e-7c4b-8f1d-2e6a9b0c1d2e")
     @NotNull(message = "must not be null")
-    @Min(value = 1, message = "must be greater than or equal to 1")
-    private Long id;
+    private String id;
 
     @Schema(description = "姓名", example = "Zhang San")
     @Size(max = 64, message = "length must be less than or equal to 64")
@@ -35,10 +32,9 @@ public class EmployeeUpdateDTO {
     @Digits(integer = 10, fraction = 2, message = "at most 10 integer digits and 2 fraction digits")
     private BigDecimal salary;
 
-    @Schema(description = "状态：0 试用 1 正式 2 离职", example = "1")
-    @Min(value = EmployeeStatus.MIN_CODE, message = "must be 0, 1 or 2")
-    @Max(value = EmployeeStatus.MAX_CODE, message = "must be 0, 1 or 2")
-    private Integer status;
+    @Schema(description = "状态编码，取值见 EmployeeStatus", example = "REGULAR",
+            allowableValues = {"TRIAL", "REGULAR", "RESIGNED"})
+    private EmployeeStatus status;
 
     @Schema(description = "入职日期", example = "2026-09-01")
     @PastOrPresent(message = "must not be in the future")

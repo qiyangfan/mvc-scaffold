@@ -8,13 +8,14 @@ import java.time.LocalDateTime;
 
 /**
  * 员工 DO：与 t_employee 表结构一一对应，只在本工程内 Service/Manager/Mapper 之间流转，禁止透传到 Controller。
+ * <p>主键为 UUID v7 字符串（应用侧生成，不再依赖自增回填），状态为编码字符串。</p>
  */
 @Data
 public class EmployeeDO {
 
-    /** 主键 */
-    private Long id;
-    /** 工号，插入后回填生成 */
+    /** 主键：UUID v7 字符串 */
+    private String id;
+    /** 工号，由主键派生，插入前即确定 */
     private String empNo;
     /** 姓名 */
     private String name;
@@ -22,8 +23,8 @@ public class EmployeeDO {
     private Long deptId;
     /** 月薪 */
     private BigDecimal salary;
-    /** 状态：0 试用 1 正式 2 离职，语义见 {@link com.example.app.common.enums.EmployeeStatus} */
-    private Integer status;
+    /** 状态编码：TRIAL / REGULAR / RESIGNED，库表 CHECK 约束同一份清单 */
+    private String status;
     /** 入职日期 */
     private LocalDate hireDate;
     /** 创建时间 */

@@ -15,8 +15,8 @@ import java.time.LocalDateTime;
 @Schema(description = "员工详情")
 public class EmployeeVO {
 
-    @Schema(description = "员工 ID", example = "1")
-    private Long id;
+    @Schema(description = "员工 ID：UUID v7 字符串", example = "019b1f2c-7a3e-7c4b-8f1d-2e6a9b0c1d2e")
+    private String id;
 
     @Schema(description = "工号", example = "EMP000001")
     private String empNo;
@@ -34,7 +34,7 @@ public class EmployeeVO {
     private BigDecimal salary;
 
     @Schema(description = "状态码", example = "1")
-    private Integer status;
+    private String status;
 
     @Schema(description = "状态描述", example = "正式")
     private String statusDesc;

@@ -42,7 +42,7 @@ class EmployeeControllerTest {
         MvcResult createResult = mockMvc.perform(post("/api/v1/employees")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"name":"Zhang San","deptId":1,"salary":20000.00,"status":0,"hireDate":"2026-09-01"}
+                                {"name":"Zhang San","deptId":1,"salary":20000.00,"status":"TRIAL","hireDate":"2026-09-01"}
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("0"))
@@ -57,12 +57,12 @@ class EmployeeControllerTest {
                 .andExpect(jsonPath("$.data.name").value("Zhang San"))
                 .andExpect(jsonPath("$.data.deptName").value("平台研发部"))
                 .andExpect(jsonPath("$.data.statusDesc").value("试用期"))
-                .andExpect(jsonPath("$.data.empNo").value("EMP000001"));
+                .andExpect(jsonPath("$.data.empNo").value(org.hamcrest.Matchers.matchesRegex("^EMP[0-9A-F]{12}$")));
 
         // 3. 更新
         mockMvc.perform(put("/api/v1/employees")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":" + id + ",\"salary\":25000.00}"))
+                        .content("{\"id\":\"" + id + "\",\"salary\":25000.00}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("0"));
 
@@ -86,7 +86,7 @@ class EmployeeControllerTest {
         mockMvc.perform(post("/api/v1/employees")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"name":"Li Si","deptId":3,"salary":10000.00,"status":0,"hireDate":"2026-09-01"}
+                                {"name":"Li Si","deptId":3,"salary":10000.00,"status":"TRIAL","hireDate":"2026-09-01"}
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("B0103"))
@@ -98,15 +98,36 @@ class EmployeeControllerTest {
         mockMvc.perform(post("/api/v1/employees")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"name":"","deptId":1,"salary":-1,"status":0,"hireDate":"2026-09-01"}
+                                {"name":"","deptId":1,"salary":-1,"status":"TRIAL","hireDate":"2026-09-01"}
                                 """))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("A0400"));
     }
 
+    /** 畸形主键：在进入 Service 之前就被转成 400，不带着任意字符串去查库 */
     @Test
-    void getShouldRejectNonPositiveId() throws Exception {
-        mockMvc.perform(get("/api/v1/employees/{id}", 0))
+    void getShouldRejectMalformedId() throws Exception {
+        mockMvc.perform(get("/api/v1/employees/{id}", "not-a-uuid"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("A0400"));
+    }
+
+    /**
+     * 畸形状态枚举：fail-closed，脏过滤值不进 Service、更不下沉到 SQL。
+     * 用小写 paid 而非乱码：同时钉住"大小写不宽容"——脏库里可能出现 paid，
+     * 它必须被拒，而不是被静默归一成 PAID。
+     */
+    @Test
+    void listShouldRejectIllegalStatus() throws Exception {
+        mockMvc.perform(get("/api/v1/employees").param("status", "paid"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("A0400"));
+    }
+
+    /** 分页超限：上限值由 PageQuery.MAX_PAGE_SIZE 单一来源强校验 */
+    @Test
+    void listShouldRejectOversizePage() throws Exception {
+        mockMvc.perform(get("/api/v1/employees").param("pageSize", "201"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("A0400"));
     }

@@ -4,8 +4,6 @@ import com.example.app.common.enums.EmployeeStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
@@ -37,11 +35,10 @@ public class EmployeeCreateDTO {
     @Digits(integer = 10, fraction = 2, message = "at most 10 integer digits and 2 fraction digits")
     private BigDecimal salary;
 
-    @Schema(description = "状态：0 试用 1 正式 2 离职", example = "0")
+    @Schema(description = "状态编码，取值见 EmployeeStatus", example = "TRIAL",
+            allowableValues = {"TRIAL", "REGULAR", "RESIGNED"})
     @NotNull(message = "must not be null")
-    @Min(value = EmployeeStatus.MIN_CODE, message = "must be 0, 1 or 2")
-    @Max(value = EmployeeStatus.MAX_CODE, message = "must be 0, 1 or 2")
-    private Integer status;
+    private EmployeeStatus status;
 
     @Schema(description = "入职日期", example = "2026-09-01")
     @NotNull(message = "must not be null")

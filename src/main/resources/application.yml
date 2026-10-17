@@ -7,10 +7,11 @@ spring:
     driver-class-name: org.h2.Driver
     username: sa
     password: ""
-  sql:
-    init:
-      # 内嵌库启动时自动执行 classpath:schema.sql
-      mode: embedded
+  # 数据库结构版本化：启动时自动执行 classpath:db/migration 下的迁移（H2 与 MySQL 同一套脚本）
+  flyway:
+    enabled: true
+    # 对已存在历史库首次接入时允许以 baseline 起跑，避免启动即失败
+    baseline-on-migrate: true
   h2:
     console:
       enabled: true
@@ -31,6 +32,7 @@ springdoc:
     path: /swagger-ui.html
 
 # 防腐层演示配置：local=配置文件模拟部门数据（默认），remote=HTTP 调用部门服务
+# provider 绑定为枚举：取值非法（既非 local 也非 remote）时应用直接启动失败，不静默回落默认值
 dept:
   provider: local
   local:

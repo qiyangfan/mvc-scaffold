@@ -18,15 +18,17 @@
     <description>增强 MVC 架构脚手架：Controller - Service - Manager - Mapper</description>
 
     <properties>
-        <java.version>21</java.version>
+        <!-- JDK 25 为当前唯一新 LTS：源码/字节码/运行时单一基线。
+             门禁工具链必须支持 Java 25 class file：JaCoCo 0.8.14 起才官方支持，低于该版本覆盖率统计直接失真 -->
+        <java.version>25</java.version>
         <mybatis-starter.version>4.1.0</mybatis-starter.version>
         <pagehelper.version>4.1.1</pagehelper.version>
         <springdoc.version>3.1.1</springdoc.version>
-        <archunit.version>1.5.0</archunit.version>
-        <spotless.version>2.44.3</spotless.version>
-        <spotbugs.version>4.8.6.6</spotbugs.version>
-        <pmd.version>3.26.0</pmd.version>
-        <jacoco.version>0.8.12</jacoco.version>
+        <jacoco.version>0.8.15</jacoco.version>
+        <archunit.version>1.5.1</archunit.version>
+        <spotbugs.version>4.10.5.0</spotbugs.version>
+        <pmd.version>3.28.0</pmd.version>
+        <spotless.version>3.10.4</spotless.version>
     </properties>
 
     <dependencies>
@@ -51,6 +53,17 @@
             <groupId>com.github.pagehelper</groupId>
             <artifactId>pagehelper-spring-boot-starter</artifactId>
             <version>${pagehelper.version}</version>
+        </dependency>
+        <!-- 数据库版本化迁移：单一 baseline，schema 变更只走 Flyway，禁止手工执行 SQL 脚本。
+             Boot 4 起 Flyway 自动配置移出 spring-boot-autoconfigure，需显式引入 spring-boot-flyway -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-flyway</artifactId>
+        </dependency>
+        <!-- Flyway 10+ 按库拆分模块，MySQL 支持需显式引入（H2 内置于 flyway-core） -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-mysql</artifactId>
         </dependency>
         <!-- 接口文档 -->
         <dependency>
@@ -102,6 +115,22 @@
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
+                </configuration>
+            </plugin>
+
+            <!-- 注解处理器显式声明：JDK 24+ 起 javac 不再从 classpath 发现注解处理器，
+                 必须走 -processorpath，否则 Lombok 静默失效（getter/构造器不生成）而构建不报错 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
 

@@ -20,18 +20,13 @@
         <result column="deleted" property="deleted"/>
     </resultMap>
 
-    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
-        INSERT INTO t_employee (name, dept_id, salary, status, hire_date)
-        VALUES (#{name}, #{deptId}, #{salary}, #{status}, #{hireDate})
+    <!-- 主键与工号均由应用侧生成，不再 useGeneratedKeys 回填自增值 -->
+    <insert id="insert">
+        INSERT INTO t_employee (id, emp_no, name, dept_id, salary, status, hire_date,
+                                gmt_create, gmt_modified, deleted)
+        VALUES (#{id}, #{empNo}, #{name}, #{deptId}, #{salary}, #{status}, #{hireDate},
+                #{gmtCreate}, #{gmtModified}, 0)
     </insert>
-
-    <update id="updateEmpNo">
-        UPDATE t_employee
-        SET emp_no = #{empNo},
-            gmt_modified = CURRENT_TIMESTAMP
-        WHERE id = #{id}
-          AND deleted = 0
-    </update>
 
     <select id="get" resultMap="employeeResultMap">
         SELECT
@@ -41,6 +36,7 @@
           AND deleted = 0
     </select>
 
+    <!-- UUID v7 字典序≈时间序，排序仍以创建时间为主，避免依赖 ID 文本序 -->
     <select id="listByQuery" resultMap="employeeResultMap"
             parameterType="com.example.app.model.dto.EmployeePageQueryDTO">
         SELECT
@@ -58,7 +54,7 @@
                 AND status = #{status}
             </if>
         </where>
-        ORDER BY id DESC
+        ORDER BY gmt_create DESC, id DESC
     </select>
 
     <update id="update" parameterType="com.example.app.model.dataobject.EmployeeDO">

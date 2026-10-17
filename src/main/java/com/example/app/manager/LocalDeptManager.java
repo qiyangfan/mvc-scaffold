@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 /**
  * 本地部门 Manager：读取配置文件中的模拟数据，默认实现（dept.provider=local 或未配置时生效）。
  * <p>替换为真实调用时切换 dept.provider=remote，业务代码零改动——这正是防腐层的价值。</p>
+ * <p>provider 取值由 {@link DeptProviderMode} 枚举约束：写成 local/remote 之外的任何值，应用启动即失败。</p>
  */
 @Slf4j
 @Component
@@ -24,11 +25,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class LocalDeptManager implements DeptManager {
 
-    private final DeptLocalProperties properties;
+    private final DeptProperties properties;
 
     @Override
     public DeptInfo getDeptInfo(Long deptId) {
-        DeptLocalProperties.LocalDept localDept = properties.getDepts().stream()
+        DeptProperties.LocalDept localDept = properties.getLocal().getDepts().stream()
                 .filter(dept -> Objects.equals(dept.getId(), deptId))
                 .findFirst()
                 .orElseThrow(() -> new BizException(ErrorCode.DEPT_NOT_FOUND));
@@ -43,8 +44,8 @@ public class LocalDeptManager implements DeptManager {
         if (deptIds == null || deptIds.isEmpty()) {
             return List.of();
         }
-        Map<Long, DeptInfo> deptInfoMap = properties.getDepts().stream()
-                .collect(Collectors.toMap(DeptLocalProperties.LocalDept::getId, this::toDeptInfo));
+        Map<Long, DeptInfo> deptInfoMap = properties.getLocal().getDepts().stream()
+                .collect(Collectors.toMap(DeptProperties.LocalDept::getId, this::toDeptInfo));
         List<DeptInfo> result = new ArrayList<>(deptIds.size());
         for (Long deptId : deptIds) {
             DeptInfo deptInfo = deptInfoMap.get(deptId);
@@ -55,7 +56,7 @@ public class LocalDeptManager implements DeptManager {
         return result;
     }
 
-    private DeptInfo toDeptInfo(DeptLocalProperties.LocalDept localDept) {
+    private DeptInfo toDeptInfo(DeptProperties.LocalDept localDept) {
         return new DeptInfo(localDept.getId(), localDept.getName(), Boolean.TRUE.equals(localDept.getEnabled()));
     }
 }

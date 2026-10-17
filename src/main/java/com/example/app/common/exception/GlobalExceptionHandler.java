@@ -3,6 +3,7 @@ package com.example.app.common.exception;
 import com.example.app.common.api.R;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -53,6 +54,19 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public R<Void> handleHttpMessageNotReadable(HttpMessageNotReadableException e) {
         log.warn("request body not readable: {}", e.getMessage());
+        return R.fail(ErrorCode.PARAM_INVALID.getCode(), ErrorCode.PARAM_INVALID.getMessage());
+    }
+
+    /**
+     * 入参类型不匹配：路径变量/查询参数与目标类型对不上（主键不是合法 UUID、状态枚举取值非法等）。
+     * <p>Spring MVC 抛的是 {@link org.springframework.web.method.annotation.MethodArgumentTypeMismatchException}，
+     * 它继承自 {@link TypeMismatchException}（beans 包）而非 ConversionException。没有这个处理器时，
+     * 类型不匹配会落进未知异常兜底返回 500——把客户端的输入错误暴露成服务端故障。</p>
+     */
+    @ExceptionHandler(TypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public R<Void> handleTypeMismatch(TypeMismatchException e) {
+        log.warn("argument type mismatch: {}", e.getMessage());
         return R.fail(ErrorCode.PARAM_INVALID.getCode(), ErrorCode.PARAM_INVALID.getMessage());
     }
 
