@@ -27,7 +27,8 @@ mvn flyway:validate -Dspring.profiles.active=mysql
 
 ## 新增一次结构变更
 
-1. 新建 `src/main/resources/db/migration/V{n}__{描述}.sql`（版本号递增，双下划线后是人类可读描述）；
+1. 新建 `src/main/resources/db/migration/VyyyyMMddHHmmss__{描述}.sql`
+   （创建时刻本机时间戳版本号，并行分支免撞号，双下划线后是人类可读描述）；
 2. 迁移脚本**只增量、不改历史**：已发布的迁移文件禁止修改内容，改了就换新版本；
 3. 遵守 `V1__baseline.sql` 头部约定的 6 条 schema 纪律（主键 UUID v7、状态 VARCHAR+CHECK、
    时间列规范、已规划能力一次到位、状态机模型不设删除位、DDL 双库兼容）；

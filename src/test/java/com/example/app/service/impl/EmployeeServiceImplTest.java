@@ -8,19 +8,24 @@ import com.example.app.mapper.EmployeeMapper;
 import com.example.app.model.dataobject.EmployeeDO;
 import com.example.app.model.dto.EmployeeCreateDTO;
 import com.example.app.model.dto.EmployeeUpdateDTO;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -28,9 +33,13 @@ import static org.mockito.Mockito.when;
 
 /**
  * Service 层单元测试：Mock 掉 Mapper 与防腐层，只验证业务规则本身。
+ * <p>时钟固定：时间语义确定性可测。</p>
  */
 @ExtendWith(MockitoExtension.class)
 class EmployeeServiceImplTest {
+
+    /** 固定时钟：业务时间戳断言不依赖墙钟 */
+    private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-11-15T08:00:00Z"), ZoneOffset.UTC);
 
     @Mock
     private EmployeeMapper employeeMapper;
@@ -38,11 +47,15 @@ class EmployeeServiceImplTest {
     @Mock
     private DeptManager deptManager;
 
-    @InjectMocks
     private EmployeeServiceImpl employeeService;
 
     /** 测试用固定主键 */
     private static final String ID = "019b1f2c-7a3e-7c4b-8f1d-2e6a9b0c1d2e";
+
+    @BeforeEach
+    void setUp() {
+        employeeService = new EmployeeServiceImpl(employeeMapper, deptManager, CLOCK);
+    }
 
     @Test
     void createShouldThrowWhenDeptNotFound() {
@@ -72,7 +85,8 @@ class EmployeeServiceImplTest {
         assertThat(persisted.getEmpNo()).isEqualTo(
                 "EMP" + id.replace("-", "").substring(0, 12).toUpperCase());
         assertThat(persisted.getStatus()).isEqualTo(EmployeeStatus.TRIAL.getCode());
-        assertThat(persisted.getGmtCreate()).isNotNull();
+        // 时间语义：创建时间来自注入时钟而非墙钟
+        assertThat(persisted.getGmtCreate()).isEqualTo(LocalDateTime.ofInstant(CLOCK.instant(), ZoneOffset.UTC));
     }
 
     @Test
@@ -86,7 +100,25 @@ class EmployeeServiceImplTest {
                 .isInstanceOf(BizException.class)
                 .extracting(e -> ((BizException) e).getErrorCode())
                 .isEqualTo(ErrorCode.BIZ_RULE_CONFLICT);
-        verify(employeeMapper, never()).update(any());
+        verify(employeeMapper, never()).update(any(), any());
+    }
+
+    /**
+     * 写时仲裁：前置检查通过后若并发离职抢先落库，条件更新受影响行数为 0，
+     * 必须判冲突而非静默放行（check-then-act 的并发兜底）。
+     */
+    @Test
+    void updateShouldRejectWhenFrozenGuardHitsConcurrently() {
+        givenRegularEmployeeInRepository();
+        when(employeeMapper.update(any(EmployeeDO.class), eq(EmployeeStatus.RESIGNED.getCode()))).thenReturn(0);
+
+        EmployeeUpdateDTO updateDTO = updateDTO();
+        updateDTO.setName("New Name");
+
+        assertThatThrownBy(() -> employeeService.updateEmployee(updateDTO))
+                .isInstanceOf(BizException.class)
+                .extracting(e -> ((BizException) e).getErrorCode())
+                .isEqualTo(ErrorCode.BIZ_RULE_CONFLICT);
     }
 
     @Test
@@ -102,13 +134,14 @@ class EmployeeServiceImplTest {
     @Test
     void updateShouldSucceed() {
         givenRegularEmployeeInRepository();
+        when(employeeMapper.update(any(EmployeeDO.class), eq(EmployeeStatus.RESIGNED.getCode()))).thenReturn(1);
 
         EmployeeUpdateDTO updateDTO = updateDTO();
         updateDTO.setName("Updated Name");
         updateDTO.setStatus(EmployeeStatus.TRIAL);
 
         employeeService.updateEmployee(updateDTO);
-        verify(employeeMapper).update(any(EmployeeDO.class));
+        verify(employeeMapper).update(any(EmployeeDO.class), eq(EmployeeStatus.RESIGNED.getCode()));
     }
 
     /** 库里已存在一名正式员工，并 stub 掉按 ID 查询 */

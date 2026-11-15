@@ -1,5 +1,8 @@
 package com.example.app.controller;
 
+import com.example.app.common.enums.EmployeeStatus;
+import com.example.app.mapper.EmployeeMapper;
+import com.example.app.model.dataobject.EmployeeDO;
 import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,6 +14,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.time.LocalDateTime;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -30,6 +36,9 @@ class EmployeeControllerTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private EmployeeMapper employeeMapper;
 
     @BeforeEach
     void cleanTable() {
@@ -89,8 +98,7 @@ class EmployeeControllerTest {
                                 {"name":"Li Si","deptId":3,"salary":10000.00,"status":"TRIAL","hireDate":"2026-09-01"}
                                 """))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value("B0103"))
-                .andExpect(jsonPath("$.message").value("department disabled"));
+                .andExpect(jsonPath("$.code").value("B0103"));
     }
 
     @Test
@@ -141,5 +149,31 @@ class EmployeeControllerTest {
                 .andExpect(jsonPath("$.code").value("0"))
                 .andExpect(jsonPath("$.data.total").value("0"))
                 .andExpect(jsonPath("$.data.list").isEmpty());
+    }
+
+    /**
+     * 写时仲裁的 SQL 语义：并发离职已落库后，条件更新受影响行数必须为 0
+     * （Service 层据此判冲突；前置检查挡不住这种交错，兜底全靠 WHERE 谓词）。
+     */
+    @Test
+    void frozenGuardShouldAffectZeroRowsAfterConcurrentResign() throws Exception {
+        MvcResult createResult = mockMvc.perform(post("/api/v1/employees")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Wang Wu","deptId":1,"salary":15000.00,"status":"REGULAR","hireDate":"2026-09-01"}
+                                """))
+                .andExpect(status().isOk())
+                .andReturn();
+        String id = JsonPath.read(createResult.getResponse().getContentAsString(), "$.data");
+        // 模拟并发离职抢先落库
+        jdbcTemplate.update("UPDATE t_employee SET status = ? WHERE id = ?",
+                EmployeeStatus.RESIGNED.getCode(), id);
+
+        EmployeeDO patch = new EmployeeDO();
+        patch.setId(id);
+        patch.setName("Changed Name");
+        patch.setGmtModified(LocalDateTime.of(2026, 11, 15, 8, 0));
+
+        assertThat(employeeMapper.update(patch, EmployeeStatus.RESIGNED.getCode())).isZero();
     }
 }

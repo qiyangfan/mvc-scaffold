@@ -20,7 +20,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
  * 远程部门 Manager 单测：用 {@link MockRestServiceServer} 拦截 HTTP，不需要起真服务、
  * 也不需要 Spring 容器——因为 {@link RestClient} 是构造注入的（见 {@link DeptRemoteConfig}）。
  *
- * <p>覆盖防腐层的四段职责：外部模型转换、异常翻译、空响应兜底、批量容错。</p>
+ * <p>覆盖防腐层的四段职责：外部模型转换、异常翻译、空响应归来源故障、批量只容忍确认未命中。</p>
  */
 class RemoteDeptManagerTest {
 
@@ -71,19 +71,19 @@ class RemoteDeptManagerTest {
                 .isEqualTo(ErrorCode.DEPT_DISABLED);
     }
 
-    /** 响应体为 null：外部服务返回 200 但空 body，不能当成"部门存在" */
+    /** 响应体为 null：200 但空 body 属来源异常，不得伪装成「确认不存在」 */
     @Test
-    void getDeptInfoShouldTreatNullBodyAsNotFound() {
+    void getDeptInfoShouldTreatNullBodyAsSourceFailure() {
         server.expect(requestTo(BASE_URL + "/api/depts/9"))
                 .andRespond(withSuccess("", MediaType.APPLICATION_JSON));
 
         assertThatThrownBy(() -> manager.getDeptInfo(9L))
                 .isInstanceOf(BizException.class)
                 .extracting(e -> ((BizException) e).getErrorCode())
-                .isEqualTo(ErrorCode.DEPT_NOT_FOUND);
+                .isEqualTo(ErrorCode.THIRD_PARTY_ERROR);
     }
 
-    /** data 段为 null：同样是不存在，且不得在解包时空指针 */
+    /** data 段为 null：契约内的「确认不存在」，与空响应体的来源故障分立，且不得在解包时空指针 */
     @Test
     void getDeptInfoShouldTreatNullDataAsNotFound() {
         server.expect(requestTo(BASE_URL + "/api/depts/9"))
@@ -97,6 +97,22 @@ class RemoteDeptManagerTest {
                 .isInstanceOf(BizException.class)
                 .extracting(e -> ((BizException) e).getErrorCode())
                 .isEqualTo(ErrorCode.DEPT_NOT_FOUND);
+    }
+
+    /** 非成功业务码：200 + 错误码 + 空 data 属来源故障，不得伪装成「确认不存在」 */
+    @Test
+    void getDeptInfoShouldTreatErrorCodeAsSourceFailure() {
+        server.expect(requestTo(BASE_URL + "/api/depts/9"))
+                .andRespond(withSuccess(
+                        """
+                        {"code":"B0001","message":"internal error","data":null}
+                        """,
+                        MediaType.APPLICATION_JSON));
+
+        assertThatThrownBy(() -> manager.getDeptInfo(9L))
+                .isInstanceOf(BizException.class)
+                .extracting(e -> ((BizException) e).getErrorCode())
+                .isEqualTo(ErrorCode.THIRD_PARTY_ERROR);
     }
 
     /**
@@ -143,5 +159,23 @@ class RemoteDeptManagerTest {
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().deptId()).isEqualTo(1L);
         server.verify();
+    }
+
+    /** 来源故障必须上抛：部门服务宕机不得静默降级为「部门缺失」，fail 方向 fail-closed */
+    @Test
+    void listDeptInfosShouldPropagateSourceFailure() {
+        server.expect(requestTo(BASE_URL + "/api/depts/1"))
+                .andRespond(withSuccess(
+                        """
+                        {"code":"0","message":"ok","data":{"deptId":1,"deptName":"平台研发部","enabled":true}}
+                        """,
+                        MediaType.APPLICATION_JSON));
+        server.expect(requestTo(BASE_URL + "/api/depts/2"))
+                .andRespond(withServerError());
+
+        assertThatThrownBy(() -> manager.listDeptInfos(List.of(1L, 2L)))
+                .isInstanceOf(BizException.class)
+                .extracting(e -> ((BizException) e).getErrorCode())
+                .isEqualTo(ErrorCode.THIRD_PARTY_ERROR);
     }
 }

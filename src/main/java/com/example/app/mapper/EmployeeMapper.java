@@ -5,6 +5,7 @@ import com.example.app.model.dto.EmployeePageQueryDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -23,9 +24,9 @@ public interface EmployeeMapper {
     /** 条件查询（未删除），供分页使用 */
     List<EmployeeDO> listByQuery(EmployeePageQueryDTO query);
 
-    /** 更新可变字段 */
-    int update(EmployeeDO employeeDO);
+    /** 更新可变字段；WHERE 复核冻结状态（frozenStatus），返回受影响行数供写时仲裁 */
+    int update(@Param("e") EmployeeDO employeeDO, @Param("frozenStatus") String frozenStatus);
 
     /** 逻辑删除 */
-    int remove(@Param("id") String id);
+    int remove(@Param("id") String id, @Param("gmtModified") LocalDateTime gmtModified);
 }

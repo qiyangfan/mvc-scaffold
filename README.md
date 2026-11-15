@@ -78,7 +78,12 @@ com.example.app
 - **统一响应**：`R{code, message, data}`，`code="0"` 成功；错误码 A 用户端 / B 系统执行侧 / C 第三方。
   业务异常返回 HTTP 200 + 业务码（后台前端惯例），参数错误 400，未知错误 500。
 - **Manager 防腐层**：部门数据在部门服务，本工程经 `DeptManager` 访问；`dept.provider=local`（演示）
-  与 `remote`（HTTP + 超时 + 异常翻译）切换零改动业务代码。
+  与 `remote`（HTTP + 超时 + 异常翻译）切换零改动业务代码。空响应体/非成功业务码归来源故障
+  （`THIRD_PARTY_ERROR`），不伪装「确认不存在」；批量读取只容忍确认未命中，来源故障上抛（fail-closed）。
+- **写时仲裁**：离职冻结等不变量不只前置检查，UPDATE 的 WHERE 复核冻结态并按受影响行数判冲突，
+  并发离职不会绕过冻结规则。
+- **业务时间注入**：Service 取注入 `Clock`，SQL 时间值由应用显式提供，ArchUnit 禁 Service 直呼墙钟，
+  测试用固定时钟确定性验证时间语义。
 - **分页**：`PageHelper.startPage` 必须紧跟查询，`clearPage()` 放 `finally` 防线程池分页串号；
   `pageSize` 上限 200。
 - **Long→String**：Jackson 全局把 Long 序列化为字符串（JS 2^53 精度问题），
@@ -105,8 +110,8 @@ com.example.app
 
 ## 新增一个业务接口（清单）
 
-1. `db/migration/V{n}__{描述}.sql` 新增结构变更（主键 UUID v7、状态 VARCHAR+CHECK、时间列规范；
-   禁改已发布迁移）。
+1. `db/migration/VyyyyMMddHHmmss__{描述}.sql` 新增结构变更（时间戳版本号免撞号；主键 UUID v7、
+   状态 VARCHAR+CHECK、时间列规范；禁改已发布迁移）。
 2. `model/dto` 建入参/查询对象（英文校验 message）→ `model/vo` 建出参。
 3. `mapper` 加接口方法 + XML（显式列名、`#{}`、禁 `SELECT *`、禁 `useGeneratedKeys`）。
 4. `service` 加接口方法 + 实现：业务规则、`@Transactional(rollbackFor = Exception.class)`、

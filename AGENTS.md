@@ -32,10 +32,16 @@
      **必须抽象为 Manager 接口并在 Manager 内部实现**（如 `DeptManager`）。
    - Manager 必须负责对外部返回模型做本地转换（如 `DeptPayload` ➔ `DeptInfo`），并对外部网络超时、
      失败进行异常捕获与翻译（如 `ErrorCode.THIRD_PARTY_ERROR`）。
+   - 事实判定必须区分「确认未命中」与「来源故障」：空响应/超时/5xx/非成功业务码归第三方错误码，
+     不得伪装成「不存在」等确认事实；批量容错只允许发生在确认未命中，来源故障必须上抛（fail-closed）。
    - 必须显式设置网络连接与读取超时时间（`setConnectTimeout` / `setReadTimeout`），严禁无超时的外部调用拖垮线程池。
 
 4. **事务与持久化规范铁律**
    - 数据写操作必须由 Service 声明 `@Transactional(rollbackFor = Exception.class)`。
+   - 状态类写必须写时仲裁：前置校验的不变量（如离职冻结）在 UPDATE 的 WHERE 子句复核，
+     按受影响行数判定，0 行即冲突；纯 check-then-act 在并发下会被绕过。
+   - 业务时间一律取注入 `Clock`（`ClockConfig` 供生产时钟），SQL 时间值由应用显式提供；
+     Service 禁止直呼墙钟（`ArchitectureTest.businessTimeMustComeFromInjectedClock` 执法）。
    - SQL 映射严禁使用 `SELECT *`，必须显式指明查询字段。
    - 严禁在 SQL 中使用 `${}` 拼接参数，必须使用 `#{}`。
    - 分页必须使用物理分页，`PageHelper.startPage` 紧跟查询，
@@ -99,3 +105,9 @@
   - *解法*：在 Service 或 Controller 组装为 `EmployeeVO` 返回。
 - **坑 3**：修改了代码格式导致 Spotless 拦截失败。
   - *解法*：直接执行 `mvn spotless:apply` 一键自动修复格式。
+- **坑 4**：架构测试长成手写 `@Test` + `ClassFileImporter` 形态（如按域循环规则）时，
+  每条规则各做一次全量类导入。
+  - *后果*：重复字节码扫描随规则数组合爆炸（真实项目实测 60+ 次全量导入、架构测试 606s，
+    共享单次导入后 11.5s）。
+  - *解法*：全部规则共享一份不可变 `JavaClasses` 静态缓存。当前 `@AnalyzeClasses + @ArchTest`
+    形态默认 `cacheMode=FOREVER` 已共享导入，无需额外处理。

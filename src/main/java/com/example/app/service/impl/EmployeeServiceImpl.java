@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -48,6 +49,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeMapper employeeMapper;
     private final DeptManager deptManager;
+    private final Clock clock;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -64,7 +66,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         employeeDO.setSalary(createDTO.getSalary());
         employeeDO.setStatus(createDTO.getStatus().getCode());
         employeeDO.setHireDate(createDTO.getHireDate());
-        employeeDO.setGmtCreate(LocalDateTime.now());
+        employeeDO.setGmtCreate(LocalDateTime.now(clock));
         employeeDO.setGmtModified(employeeDO.getGmtCreate());
         employeeMapper.insert(employeeDO);
         log.info("employee created, id:{}, empNo:{}, deptId:{}", id, employeeDO.getEmpNo(),
@@ -100,7 +102,12 @@ public class EmployeeServiceImpl implements EmployeeService {
         employeeDO.setSalary(updateDTO.getSalary());
         employeeDO.setStatus(updateDTO.getStatus() == null ? null : updateDTO.getStatus().getCode());
         employeeDO.setHireDate(updateDTO.getHireDate());
-        employeeMapper.update(employeeDO);
+        employeeDO.setGmtModified(LocalDateTime.now(clock));
+        // 写时仲裁：WHERE 复核冻结不变量，防 check-then-act 被并发离职绕过；受影响行 0 即冲突
+        int rows = employeeMapper.update(employeeDO, EmployeeStatus.RESIGNED.getCode());
+        if (rows == 0) {
+            throw new BizException(ErrorCode.BIZ_RULE_CONFLICT, "employee status changed concurrently");
+        }
         log.info("employee updated, id:{}", updateDTO.getId());
     }
 
@@ -108,7 +115,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Transactional(rollbackFor = Exception.class)
     public void removeEmployee(String id) {
         requireEmployee(id);
-        employeeMapper.remove(id);
+        employeeMapper.remove(id, LocalDateTime.now(clock));
         log.info("employee removed, id:{}", id);
     }
 

@@ -57,32 +57,34 @@
         ORDER BY gmt_create DESC, id DESC
     </select>
 
-    <update id="update" parameterType="com.example.app.model.dataobject.EmployeeDO">
+    <!-- 写时仲裁：WHERE 复核冻结状态，并发离职后本次更新受影响行数为 0，由 Service 判冲突 -->
+    <update id="update">
         UPDATE t_employee
         <set>
-            <if test="name != null">
-                name = #{name},
+            <if test="e.name != null">
+                name = #{e.name},
             </if>
-            <if test="salary != null">
-                salary = #{salary},
+            <if test="e.salary != null">
+                salary = #{e.salary},
             </if>
-            <if test="status != null">
-                status = #{status},
+            <if test="e.status != null">
+                status = #{e.status},
             </if>
-            <if test="hireDate != null">
-                hire_date = #{hireDate},
+            <if test="e.hireDate != null">
+                hire_date = #{e.hireDate},
             </if>
-            gmt_modified = CURRENT_TIMESTAMP
+            gmt_modified = #{e.gmtModified}
         </set>
-        WHERE id = #{id}
+        WHERE id = #{e.id}
           AND deleted = 0
+          AND status != #{frozenStatus}
     </update>
 
     <!-- 逻辑删除：业务数据不物理删除，便于审计与找回 -->
     <update id="remove">
         UPDATE t_employee
         SET deleted = 1,
-            gmt_modified = CURRENT_TIMESTAMP
+            gmt_modified = #{gmtModified}
         WHERE id = #{id}
           AND deleted = 0
     </update>

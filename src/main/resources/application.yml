@@ -28,6 +28,8 @@ pagehelper:
   reasonable: true
 
 springdoc:
+  # 契约导出键序稳定：消除响应 map 顺序抖动导致的 CI 漂移门禁假红
+  writer-with-order-by-keys: true
   swagger-ui:
     path: /swagger-ui.html
 
