@@ -56,6 +56,8 @@
    - 本地提交前必须执行 `mvn clean verify -DskipTests=false`。
    - **Spotless** 代码格式、**PMD** 静态分析（0 violation）、**SpotBugs** 字节码缺陷（0 bug）、
      **JaCoCo** 测试覆盖率（Instruction ≥ 70%, Branch ≥ 50%）、**ArchUnit** 架构测试必须全部通过。
+   - 安全与供应链门禁（gitleaks、osv-scanner、CodeQL、SBOM+许可证、迁移不可变）
+     的本地命令与负向验收见 `GATES.md`；`security.yml` 与 `codeql.yml` 在 CI 兜底。
 
 ---
 

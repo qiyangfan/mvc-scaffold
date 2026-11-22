@@ -16,20 +16,18 @@ jobs:
     name: verify (JDK 25)
     runs-on: ubuntu-latest
     steps:
-      # SHA 固定：actions/checkout@v5 的 tag 是轻量 tag，指向 commit
-      # fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09（= releases/v5 分支头）。
-      # 浮动 tag 可被 action 所有者静默改指向（供应链攻击面），故按 zizmor 建议 pin 到 commit；
-      # 升级时用 dependabot / renovate 跟着 v5 tag 走，不要手写回浮动 tag。
+      # SHA 固定：浮动 tag 可被 action 所有者静默改指向（供应链攻击面），
+      # 故按 zizmor 建议 pin 到 commit；升级时用 dependabot / renovate 跟着大版本走。
       # persist-credentials=false：本流水线只用 git status/diff 做本地比对，不需要推送凭证，
       # 不留凭证可避免后续任何上传 workspace 的步骤把 GITHUB_TOKEN 带进产物。
       - name: Checkout repository
-        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
 
       # 前端/契约工具链对齐版本：openapi-typescript 等由前端侧执行
       - name: Set up Node.js 24
-        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444  # v5
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: '24'
 
@@ -46,7 +44,7 @@ jobs:
       # 门禁工具链（JaCoCo 0.8.15 / ArchUnit 1.5.1 / SpotBugs 4.10.5 / PMD 3.28）
       # 均已支持 Java 25 class file，低于这些版本的覆盖率统计会失真
       - name: Set up JDK 25
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961  # v5
+        uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6
         with:
           distribution: temurin
           java-version: '25'
@@ -67,3 +65,7 @@ jobs:
             git --no-pager diff -- contracts/
             exit 1
           fi
+
+      # 迁移不可变门禁：Flyway 只增不改，破坏性 DDL 必须登记豁免。
+      - name: Check migration immutability
+        run: scripts/migration-guard.sh

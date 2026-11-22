@@ -1,0 +1,11 @@
+extends: default
+
+rules:
+  line-length: disable
+  document-start: disable
+  comments:
+    min-spaces-from-content: 1
+    require-starting-space: true
+  # GitHub Actions 的 `on:` 是键名，不是布尔真值
+  truthy:
+    allowed-values: ["true", "false", "on"]

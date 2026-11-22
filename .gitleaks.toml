@@ -1,0 +1,11 @@
+title = "mvc-scaffold secrets policy"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "仅允许测试夹具与文档中的假值，逐条写原因"
+paths = [
+  '''(^|/)src/test/resources/fixtures/''',
+  '''(^|/)docs?/.*\.(md|png|jpg)$''',
+]
